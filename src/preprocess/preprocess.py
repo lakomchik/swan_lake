@@ -23,16 +23,16 @@ def basic_preprocess(root_dir, total_swans_num, description_df):
     # folder_names = os.listdir('data')
     # folder_names.sort()
     folder_names = ['klikun', 'maliy', 'shipun']
-    folder_names = ['data/' + x for x in folder_names]
     if not os.path.exists(images_path):
         os.makedirs(images_path)
     if not os.path.exists(masks_path):
         os.makedirs(masks_path)
     for label, folder_name in enumerate(folder_names):
+        folder_path = os.path.join(root_dir, folder_name)
         # folder_path = os.path.join(root_dir, folder_name)
 
-        image_path = os.path.join(folder_name, 'images')
-        mask_path = os.path.join(folder_name, 'masks')
+        image_path = os.path.join(folder_path, 'images')
+        mask_path = os.path.join(folder_path, 'masks')
         image_files = os.listdir(image_path)
         mask_files = os.listdir(mask_path)
         image_files.sort()
@@ -60,9 +60,3 @@ def basic_preprocess(root_dir, total_swans_num, description_df):
                 print(f"Error with image {image_file} and mask {mask_file}")
                 break
     return description_df
-
-
-description = pd.DataFrame(columns=['swan_id', 'image_name', 'mask_name'])
-total_num = [0]
-description = basic_preprocess('./small_dataset', total_num, description)
-description.to_csv('small_dataset'+"/description.csv")
