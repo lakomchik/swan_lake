@@ -40,8 +40,6 @@ class SwanDataset(Dataset):
         self.images_path = os.path.join(root_dir, 'images')
         self.masks_path = os.path.join(root_dir,'masks')
         self.transforms = transforms
-        image = np.array(image)
-        mask = np.array(mask)
 
     def __len__(self):
         return len(self.description_df)
