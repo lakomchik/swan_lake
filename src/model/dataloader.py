@@ -8,65 +8,78 @@ from PIL import Image, __version__
 PIL.PILLOW_VERSION = __version__
 import matplotlib.pyplot as plt
 from torchvision.transforms import ToTensor, ToPILImage
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
+
+class UnNormalize(object):
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor):
+        """
+        Args:
+            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
+        Returns:
+            Tensor: Normalized image.
+        """
+        for t, m, s in zip(tensor, self.mean, self.std):
+            t.mul_(s).add_(m)
+            # The normalize code -> t.sub_(m).div_(s)
+        return tensor
 
 class SwanDataset(Dataset):
-    def __init__(self, root_dir, transforms):
+    def __init__(self, root_dir, description_df, transforms=None):
         super().__init__()
         self.root_dir = root_dir
-        self.folder_names = os.listdir(self.root_dir)
-        self.images = []
-        self.masks = []
-        self.labels = []
-        self.images_path = 'images'
-        self.masks_path = 'masks'
+        self.description_df = description_df
+        self.labels = self.description_df.swan_id.to_list()
+        self.images = self.description_df.image_name.to_list()
+        self.masks = self.description_df.mask_name.to_list()
+        self.images_path = os.path.join(root_dir, 'images')
+        self.masks_path = os.path.join(root_dir,'masks')
         self.transforms = transforms
-        for label, folder_name in enumerate(self.folder_names):
-            folder_path = os.path.join(self.root_dir, folder_name)
-            image_path = os.path.join(folder_path, self.images_path)
-            mask_path = os.path.join(folder_path, self.masks_path)
-            image_files = os.listdir(image_path)
-            mask_files = os.listdir(mask_path)
-            image_files.sort()
-            mask_files.sort()
-            for image_file in image_files:
-                image_name = os.path.splitext(image_file)[0]
-                mask_file = image_name + ".png"
-                if mask_file in mask_files:
-                    image = Image.open(os.path.join(image_path, image_file))
-                    mask = Image.open(os.path.join(mask_path, mask_file))
-                    if self.transforms is not None:
-                        image = self.transforms(image)
-                        mask = self.transforms(mask)
-                    else:
-                        image = ToTensor(image)
-                        mask = ToTensor(mask)
-                    self.images.append(image)
-                    self.masks.append(mask)
-                    self.labels.append(label)
+        image = np.array(image)
+        mask = np.array(mask)
 
     def __len__(self):
-        return len(self.images)
+        return len(self.description_df)
 
     def __getitem__(self, idx):
-        image = self.images[idx]
-        mask = self.masks[idx]
+        image = Image.open(os.path.join(self.images_path, self.images[idx]))
+        mask = Image.open(os.path.join(self.masks_path, self.masks[idx]))
+        image = np.array(image)
+        mask = np.array(mask)
+        if self.transforms is not None:
+            res = self.transforms(image=image,mask=mask)
+            image = res['image']
+            mask = res['mask']
+        else:
+            basic_transforms = A.Compose(
+                [
+                    A.Normalize(mean=(0.490, 0.450, 0.400),std=(0.230, 0.225, 0.225)),
+                    ToTensorV2()
+                ]
+            )
+            res = basic_transforms(image = image, mask = mask)
+            image = res['image']
+            mask = res['mask']
         label = self.labels[idx]
 
-        return image, mask, label
+        return image, mask.type(torch.LongTensor), label
     
     def visualize_sample(self, idx):
         image, mask, label = self[idx]
-
-        to_pil = ToPILImage()
-
-        image = to_pil(image)
-        mask = to_pil(mask)
-
+        unnorm = UnNormalize(mean=(0.490, 0.450, 0.400),std=(0.230, 0.225, 0.225))
+        image = unnorm(image)
+        image = image.permute(1, 2, 0).numpy()
+        mask = mask.numpy()
         fig, axes = plt.subplots(1, 2, figsize=(10, 5))
         axes[0].imshow(image)
         axes[0].set_title('Image')
         axes[0].axis('off')
-        axes[1].imshow(mask)
+        axes[1].imshow(mask, cmap = 'gray')
         axes[1].set_title('Mask')
         axes[1].axis('off')
         plt.suptitle('Label: {}'.format(label))
