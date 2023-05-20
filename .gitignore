@@ -1,1 +1,3 @@
 train_dataset_Минприроды/
+**/__pycache__/**
+**/wandb/**
