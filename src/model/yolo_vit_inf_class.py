@@ -10,7 +10,7 @@ import timm
 
 
 class YoloVitPredictor():
-    def __init__(self, yolo_path, classifier_path, device='cpu') -> None:
+    def __init__(self, yolo_path="src/checkpoints/yolo_swan_detector.pt", classifier_path='src/checkpoints/MViT_single_swan.pth', device='cpu') -> None:
         self.yolo = YOLO(yolo_path)
         self.classifier = timm.create_model(
             'mobilevitv2_075.cvnets_in1k', pretrained=True, num_classes=3)
@@ -26,7 +26,7 @@ class YoloVitPredictor():
         self.device = device
         self.classifier = self.classifier.to(self.device)
 
-    def single_inference(self, img):
+    def forward(self, img):
         # yolo inference
         if (self.device == 'cpu'):
             yolo_output = self.yolo.predict(
@@ -43,15 +43,18 @@ class YoloVitPredictor():
         with torch.no_grad():
             outputs = self.classifier(batch)
             predictions = torch.argmax(outputs, dim=1).to(self.device)
+            output_probas = torch.softmax(outputs, dim=1)
+            output_probas = torch.sum(output_probas, dim=0)
+            output_probas = output_probas / torch.sum(output_probas)
             result = torch.argmax(torch.bincount(predictions)).cpu().item()
-            return result
+            return result, output_probas.cpu().numpy().reshape(-1)
 
 
 if __name__ == "__main__":
     yolo_path = 'src/checkpoints/yolo_swan_detector.pt'
     mvit_path = 'src/checkpoints/MViT_single_swan.pth'
     model = YoloVitPredictor(yolo_path, mvit_path)
-    img = cv2.imread("pics/4.png")
+    img = cv2.imread("data/shipun/images/img_2021.jpg")
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     res = model.single_inference(img)
     print(res)
