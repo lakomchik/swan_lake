@@ -16,6 +16,9 @@ chkp_path = os.path.join(os.getcwd(),'src','checkpoints')
 
 class model_inference():
     def __init__(self, weights_path = os.path.join(chkp_path,'best_mobile.pt')) -> None:
+        
+        # self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cpu'
 
         self.model = timm.create_model('mobilevitv2_075.cvnets_in1k', pretrained=True,num_classes=3)
 
@@ -31,6 +34,7 @@ class model_inference():
         dct = torch.load(weights_path)
 
         self.model.load_state_dict(dct)
+        self.model.to(self.device)
 
         self.transforms =  Compose([
                     Resize(256,256),
@@ -38,16 +42,26 @@ class model_inference():
                     ToTensorV2()
                 ])
 
-    def single_inference(self,image):
-        image = np.array(image)
-        image_transformed = self.transforms(image=image)['image'].unsqueeze(0)
-        out = self.model(image_transformed).argmax(1)[0]
-        return out.detach().cpu().numpy()
-
+    # def single_inference(self,image):
+    #     image = np.array(image)
+    #     image_transformed = self.transforms(image=image)['image'].unsqueeze(0)
+    #     out = self.model(image_transformed).argmax(1)[0]
+    #     return out.detach().cpu().numpy()
+    
+    def multiple_inference(self,list_of_paths):
+        out_list = [0] * len(list_of_paths) 
+        with torch.no_grad():
+            self.model.eval()
+            for i,path in tqdm(enumerate(list_of_paths)):
+                image = np.array(Image.open(path))
+                image_transformed = self.transforms(image=image)['image'].unsqueeze(0).to(self.device)
+                out = self.model(image_transformed).softmax(1).detach().cpu().numpy()
+                out_list[i] = out
+        return list(zip(list_of_paths,out_list))
 
 def main():
     mf = model_inference()
-    result = mf.single_inference(Image.open('./train_dataset_Минприроды/Merged/images/0.jpg'))
+    result = mf.multiple_inference([os.path.join('./train_dataset_Минприроды/shipun/images/',filename) for filename in os.listdir('./train_dataset_Минприроды/shipun/images/')])
     print(result)
 
 if __name__ == '__main__':
