@@ -24,8 +24,8 @@ file_names = os.listdir(image_folder)
 random.shuffle(file_names)
 
 # Calculate the number of files to move to the test and validation sets
-test_size = int(0.1 * len(file_names))
-val_size = int(0.1 * len(file_names))
+test_size = int(0* len(file_names))
+val_size = int(0.3 * len(file_names))
 
 # Move the first test_size files to the test set
 for i in range(test_size):
