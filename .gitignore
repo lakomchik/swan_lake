@@ -1,1 +1,5 @@
 train_dataset_Минприроды/
+**/__pycache__/**
+**/wandb/**
+**/checkpoints/**
+!**/best_mobile.pt
