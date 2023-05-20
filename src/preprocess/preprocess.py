@@ -14,9 +14,13 @@ PIL.PILLOW_VERSION = __version__
 warnings.filterwarnings('ignore')
 
 
-def basic_preprocess(root_dir, total_swans_num, description_df):
+def basic_preprocess(root_dir):
     # images_path = os.path.join(root_dir, '/Merged/images')
     # masks_path = os.path.join(root_dir, '/Merged/masks')
+
+    total_swans_num = 0
+    description_df = pd.DataFrame()
+
     images_path = root_dir + '/Merged/images/'
     masks_path = root_dir + '/Merged/masks/'
     print(root_dir)
@@ -37,7 +41,7 @@ def basic_preprocess(root_dir, total_swans_num, description_df):
         mask_files = os.listdir(mask_path)
         image_files.sort()
         mask_files.sort()
-        threshold = 20
+        
         for image_file, mask_file in tqdm(zip(image_files, mask_files)):
             image = Image.open(os.path.join(image_path, image_file))
             mask = Image.open(os.path.join(mask_path, mask_file))
@@ -48,12 +52,12 @@ def basic_preprocess(root_dir, total_swans_num, description_df):
                 image = image.convert("RGB")
             try:
                 image.save(os.path.join(
-                    images_path, str(total_swans_num[0])+'.png'))
+                    images_path, str(total_swans_num)+'.jpg'))
                 mask.save(os.path.join(
-                    masks_path, str(total_swans_num[0])+'.png'))
-                total_swans_num[0] += 1
+                    masks_path, str(total_swans_num)+'.png'))
+                total_swans_num += 1
                 new_row = {"swan_id": label, "image_name": str(
-                    total_swans_num[0]) + ".png", "mask_name": str(total_swans_num[0]) + ".png"}
+                    total_swans_num) + ".jpg", "mask_name": str(total_swans_num) + ".png"}
                 description_df = description_df.append(
                     new_row, ignore_index=True)
             except:
