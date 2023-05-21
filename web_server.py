@@ -9,6 +9,14 @@ from ansamble import Ansamble
 
 black_box = Ansamble()
 
+# OURS 0: KLIKUN , 1: MALIY, 2: shipun
+# ORGS MALIY: 1, KLIKUN: 2, SHIPUN: 3
+transition_dict = {
+    0: 2,
+    1: 1,
+    2: 3
+}
+
 
 def neural_network(images):
     result = [[img, np.array(
@@ -24,7 +32,9 @@ def create_csv(data, full_type=False):
         writer.writerow(["name", "class"] + full_type *
                         ['class_0', 'class_1', 'class_2'])
         for i in data:
-            writer.writerow([str(i[0].split('/')[-1]), str(np.argmax(i[1]))
+            id = transition_dict[np.argmax(i[1])]
+
+            writer.writerow([str(i[0].split('/')[-1]), str(id)
                              ] + full_type*[i[1][0], i[1][1], i[1][2]])
 
 
@@ -36,6 +46,8 @@ def callback_function(files):
     # return ['a', 'b', [(cv.imread(i.name), str(i.name)[-5:]) for i in files]]
     resulting_gallery = [(i[0], lables[np.argmax(
         i[1])] + f' {int(np.max(i[1])*100)}% ' + str(i[0].split('/')[-1].split('.')[0])) for i in results]
+
+    print(results)
     create_csv(results)
     create_csv(results, True)
 
