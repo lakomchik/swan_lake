@@ -14,7 +14,8 @@ class YoloVitPredictor():
         self.yolo = YOLO(yolo_path)
         self.classifier = timm.create_model(
             'mobilevitv2_075.cvnets_in1k', pretrained=True, num_classes=3)
-        self.classifier.load_state_dict(torch.load(classifier_path,map_location=torch.device('cpu')))
+        self.classifier.load_state_dict(torch.load(
+            classifier_path, map_location=torch.device('cpu')))
         self.classifier.eval()
         self.size = (256, 256)
         self.clf_transforms = transforms.Compose([
@@ -39,12 +40,21 @@ class YoloVitPredictor():
         for el in boxes:
             clf_input.append(self.clf_transforms(
                 img[el[1]:el[3], el[0]:el[2], :]))
+        flag = True
+        if (len(clf_input) == 0):
+            clf_input = [torch.tensor([[0.001, 0.001, 0.001]])]
+            flag = False
         batch = torch.stack(clf_input)
         with torch.no_grad():
-            outputs = self.classifier(batch)
-            predictions = torch.argmax(outputs, dim=1).to(self.device)
-            output_probas = torch.softmax(outputs, dim=1)
-            output_probas = torch.sum(output_probas, dim=0)
+            if (flag):
+                outputs = self.classifier(batch)
+                predictions = torch.argmax(outputs, dim=1).to(self.device)
+                output_probas = torch.softmax(outputs, dim=1)
+                output_probas = torch.sum(output_probas, dim=0)
+            else:
+                output_probas = clf_input[0]
+                predictions = torch.argmax(
+                    output_probas, dim=1).to(self.device)
             output_probas = output_probas / torch.sum(output_probas)
             result = torch.argmax(torch.bincount(predictions)).cpu().item()
             return result, output_probas.cpu().numpy().reshape(-1)

@@ -28,7 +28,7 @@ def neural_network(images):
 
 def create_csv(data, full_type=False):
     with open(f'results{"_full" if full_type else ""}.csv', 'w', newline='') as file:
-        writer = csv.writer(file, delimiter =';')
+        writer = csv.writer(file, delimiter=';')
         writer.writerow(["name", "class"] + full_type *
                         ['class_0', 'class_1', 'class_2'])
         for i in data:

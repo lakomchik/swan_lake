@@ -38,9 +38,12 @@ class Ansamble():
 
         for i, path in enumerate(list_of_paths):
             image = Image.open(path)
-            if image.mode == "RGBA":
-                image = image.convert("RGB")
-            image = np.array(image)
+            # if image.mode == "RGBA":
+            #     image = image.convert("RGB")
+            image = np.array(image)[:, :, :3]
+            print(path)
+            print(image.shape)
+
             _, out = self.forward(image)
             out_list[i] = out
         return list(zip(list_of_paths, out_list))
