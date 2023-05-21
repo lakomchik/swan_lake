@@ -47,7 +47,6 @@ def callback_function(files):
     resulting_gallery = [(i[0], lables[np.argmax(
         i[1])] + f' {int(np.max(i[1])*100)}% ' + str(i[0].split('/')[-1].split('.')[0])) for i in results]
 
-    print(results)
     create_csv(results)
     create_csv(results, True)
 

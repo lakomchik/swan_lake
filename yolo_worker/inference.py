@@ -16,7 +16,7 @@ class YOLODetector:
         returns array w normalized class predictiton
         '''
         result = self.model.predict(img, verbose=False)
-        obj = [0, 0, 0]
+        obj = [0.001, 0.001, 0.001]
         for i in result[0].boxes:
             obj[int(i.cls)] += i.conf.cpu().item()
         obj = np.array(obj)
