@@ -14,7 +14,7 @@ class YoloVitPredictor():
         self.yolo = YOLO(yolo_path)
         self.classifier = timm.create_model(
             'mobilevitv2_075.cvnets_in1k', pretrained=True, num_classes=3)
-        self.classifier.load_state_dict(torch.load(classifier_path))
+        self.classifier.load_state_dict(torch.load(classifier_path,map_location=torch.device('cpu')))
         self.classifier.eval()
         self.size = (256, 256)
         self.clf_transforms = transforms.Compose([

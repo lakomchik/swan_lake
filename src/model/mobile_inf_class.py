@@ -33,7 +33,7 @@ class MViT():
                                       nn.Dropout(0.4),
                                       nn.Linear(in_features=512, out_features=3))
 
-        dct = torch.load(weights_path)
+        dct = torch.load(weights_path,map_location=torch.device('cpu'))
 
         self.model.load_state_dict(dct)
         self.model.to(self.device)
