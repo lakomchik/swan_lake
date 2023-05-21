@@ -9,6 +9,15 @@ from PIL import Image
 import os
 
 
+# OURS 0: KLIKUN , 1: MALIY, 2: shipun
+# ORGS 1: MALIY, KLIKUN: 2, SHIPUN: 3
+
+label_mapper = {
+
+
+}
+
+
 class Ansamble():
     def __init__(self) -> None:
         self.clfs = [YOLODetector(),
@@ -28,7 +37,10 @@ class Ansamble():
         out_list = [0] * len(list_of_paths)
 
         for i, path in enumerate(list_of_paths):
-            image = np.array(Image.open(path))
+            image = Image.open(path)
+            if image.mode == "RGBA":
+                image = image.convert("RGB")
+            image = np.array(image)
             _, out = self.forward(image)
             out_list[i] = out
         return list(zip(list_of_paths, out_list))
